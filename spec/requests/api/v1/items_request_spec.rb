@@ -113,12 +113,38 @@ describe "Items API" do
     expect(Item.count).to eq(1)
 
     expect{ delete "/api/v1/items/#{item.id}" }.to change(Item, :count).by(-1)
-    
+
     delete "/api/v1/items/#{item.id}"
 
     expect(response).to be_successful
 
     expect(Item.count).to eq(0)
     expect{Item.find(item.id)}.to raise_error(ActiveRecord::RecordNotFound)
+  end
+
+  describe "Relationships" do
+    it "should return all merchants accoicated with the item" do
+      item = create(:item)
+      merchant = Merchant.find(item.merchant_id)
+
+      get "/api/v1/items/#{item.id}/merchants"
+
+      expect(response).to be_successful
+
+      merchant = JSON.parse(response.body, symbolize_names: true)
+      merchant = merchant[:data]
+      
+      expect(merchant).to have_key(:id)
+      expect(merchant[:id]).to be_an(Integer)
+
+      expect(merchant).to have_key(:type)
+      expect(merchant[:type]).to be_a(String)
+
+      expect(merchant).to have_key(:attributes)
+      expect(merchant[:attributes]).to be_a(Hash)
+
+      expect(merchant[:attributes]).to have_key(:name)
+      expect(merchant[:attributes][:name]).to be_a(String)
+    end
   end
 end
