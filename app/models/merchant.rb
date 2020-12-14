@@ -3,4 +3,9 @@ class Merchant < ApplicationRecord
 
   has_many :invoices
   has_many :items
+
+
+  def all_items
+    items.where(merchant_id: self.id)
+  end
 end
