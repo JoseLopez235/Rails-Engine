@@ -14,7 +14,7 @@ describe "Items API" do
 
     items[:data].each do |item|
       expect(item).to have_key(:id)
-      expect(item[:id]).to be_an(Integer)
+      expect(item[:id]).to be_an(String)
 
       expect(item).to have_key(:type)
       expect(item[:type]).to be_a(String)
@@ -48,7 +48,7 @@ describe "Items API" do
     item = item[:data]
 
     expect(item).to have_key(:id)
-    expect(item[:id]).to eq(id)
+    expect(item[:id]).to eq("#{id}")
 
     expect(item).to have_key(:type)
     expect(item[:type]).to eq("item")
@@ -133,9 +133,9 @@ describe "Items API" do
 
       merchant = JSON.parse(response.body, symbolize_names: true)
       merchant = merchant[:data]
-      
+
       expect(merchant).to have_key(:id)
-      expect(merchant[:id]).to be_an(Integer)
+      expect(merchant[:id]).to be_an(String)
 
       expect(merchant).to have_key(:type)
       expect(merchant[:type]).to be_a(String)
