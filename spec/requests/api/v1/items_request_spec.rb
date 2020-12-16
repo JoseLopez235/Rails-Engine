@@ -147,4 +147,59 @@ describe "Items API" do
       expect(merchant[:attributes][:name]).to be_a(String)
     end
   end
+  describe "Find Endpoints" do
+    it "should find one item with the corresponding value" do
+      item = create(:item, name: "Stuff Bear")
+      create(:item, name: "Toy Car")
+      attribute = "name"
+      value = "bear"
+
+      get "/api/v1/items/find?#{attribute}=#{value}"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(item.name).to eq(json[:data][:attributes][:name])
+    end
+
+    it "should find one item with a diffrent value" do
+      create(:item, name: "Stuff Bear", description: "Fluffy and Cute")
+      item = create(:item, name: "Toy Car", description: "Red Color with stripes")
+      attribute = "description"
+      value = "co"
+
+      get "/api/v1/items/find?#{attribute}=#{value}"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(item.description).to eq(json[:data][:attributes][:description])
+    end
+    it "should find all merchants that correspond with the value" do
+      create(:item, name: "Stuff Bear", description: "Fluffy and Cute")
+      create(:item, name: "Toy Car", description: "Red Color with stripes")
+      create(:item, name: "Stuff Lion", description: "Cute")
+      create(:item, name: 'Princess Doll', description: "Cute and pretty")
+      attribute = "description"
+      value = "cute"
+
+      get "/api/v1/items/find_all?#{attribute}=#{value}"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      items = json[:data]
+
+      expect(items.count).to eq(3)
+
+      expect(items[0][:attributes][:description]).to eq("Fluffy and Cute")
+
+      expect(items[1][:attributes][:description]).to eq("Cute")
+
+      expect(items[2][:attributes][:description]).to eq("Cute and pretty")
+    end
+  end
 end

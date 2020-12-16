@@ -8,4 +8,12 @@ class Merchant < ApplicationRecord
   def all_items
     items.where(merchant_id: self.id)
   end
+
+  def self.find_merchant(attribute, value)
+    where("#{attribute} ILIKE ?", "%#{value}%").first
+  end
+
+  def self.find_all_merchant(attribute, value)
+    where("#{attribute} ILIKE ?", "%#{value}%")
+  end
 end

@@ -133,4 +133,42 @@ describe "Merchants API" do
       end
     end
   end
+  describe "Find Endpoints" do
+    it "should find one merchant with the corresponding value" do
+      merchant = create(:merchant, name: "Jose Lopez")
+      create(:merchant, name: "Bob Joe")
+      attribute = "name"
+      value = "Jo"
+
+      get "/api/v1/merchants/find?#{attribute}=#{value}"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(merchant.name).to eq(json[:data][:attributes][:name])
+    end
+
+    it "should find all merchants that correspond with the value" do
+      create(:merchant, name: "Jose Lopez")
+      create(:merchant, name: "Bob Joe")
+      create(:merchant, name: "Lorraine Rodriguez")
+      attribute = "name"
+      value = "lo"
+
+      get "/api/v1/merchants/find_all?#{attribute}=#{value}"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      merchants = json[:data]
+
+      expect(merchants.count).to eq(2)
+
+      expect(merchants[0][:attributes][:name]).to eq("Jose Lopez")
+
+      expect(merchants[1][:attributes][:name]).to eq("Lorraine Rodriguez")
+    end
+  end
 end
