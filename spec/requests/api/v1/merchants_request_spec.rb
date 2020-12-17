@@ -259,33 +259,35 @@ describe "Merchants API" do
       merchant3 = create(:merchant)
       customer = create(:customer)
 
-      item1 = create(:item, merchant_id: merchant1.id)
-      item2 = create(:item, merchant_id: merchant1.id)
-      item3 = create(:item, merchant_id: merchant2.id)
-      item4 = create(:item, merchant_id: merchant3.id)
+      item1 = create(:item, merchant_id: merchant1.id, name: 'Bike', unit_price: 100.38)
+      item2 = create(:item, merchant_id: merchant1.id, name: 'RTV', unit_price: 500.39)
+      item3 = create(:item, merchant_id: merchant2.id, name: 'Diamonds', unit_price: 2502.29)
+      item4 = create(:item, merchant_id: merchant3.id, name: 'Pizza', unit_price: 100.36)
 
-      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
-      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
-      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant2.id)
-      invoice4 = create(:invoice, customer_id: customer.id, merchant_id: merchant3.id)
+      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id, created_at: "2012-03-24", status: 'shipped')
+      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id, created_at: "2012-03-24", status: 'packaged')
+      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant2.id, created_at: "2012-03-24", status: 'shipped')
+      invoice4 = create(:invoice, customer_id: customer.id, merchant_id: merchant3.id, created_at: "2012-03-24", status: 'returned')
 
-      create(:transaction, invoice_id: invoice1.id, result: "success", created_at: "2012-03-05")
-      create(:transaction, invoice_id: invoice2.id, result: "success", created_at: "2012-08-08")
-      create(:transaction, invoice_id: invoice3.id, result: "success", created_at: "2012-08-05")
-      create(:transaction, invoice_id: invoice4.id, result: "failed", created_at: "2012-10-04")
+      create(:transaction, invoice_id: invoice1.id, result: "success")
+      create(:transaction, invoice_id: invoice2.id, result: "success")
+      create(:transaction, invoice_id: invoice3.id, result: "success")
+      create(:transaction, invoice_id: invoice4.id, result: "failed")
 
-      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id )
-      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id )
-      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id )
-      create(:invoice_item, item_id: item4.id, invoice_id: invoice4.id )
+      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id, quantity: 10, unit_price: 100.38)
+      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id, quantity: 5, unit_price: 500.38)
+      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id, quantity: 1, unit_price: 2502.29)
+      create(:invoice_item, item_id: item4.id, invoice_id: invoice4.id, quantity: 5, unit_price: 100.36)
 
-      get "/api/v1/revenue?start=2012-03-01&end=2012-10-24"
+      get "/api/v1/revenue?start=2012-03-09&end=2012-03-24"
 
       expect(response).to be_successful
 
       json = JSON.parse(response.body, symbolize_names: true)
 
-      merchants = json[:data]
+      revenue = json[:data]
+
+      expect(revenue[:attributes][:revenue]).to eq(3506.09)
     end
   end
 end
