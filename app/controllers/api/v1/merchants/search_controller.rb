@@ -11,6 +11,14 @@ module Api
           attribute = params.keys.first
           render json: MerchantSerializer.new(Merchant.find_merchant(attribute, params[attribute]))
         end
+
+        def most_revenue
+          render json: MerchantSerializer.new(Merchant.merchants_revenue(params[:quantity]))
+        end
+
+        def most_items
+          render json: MerchantSerializer.new(Merchant.most_item_sold(params[:quantity]))
+        end
       end
     end
   end

@@ -59,7 +59,7 @@ describe "Merchants API" do
                   })
     headers = {"CONTENT_TYPE" => "application/json"}
 
-    post "/api/v1/merchants", headers: headers, params: JSON.generate(merchant: merchant_params)
+    post "/api/v1/merchants", headers: headers, params: JSON.generate(merchant_params)
     created_merchant = Merchant.last
 
     expect(response).to be_successful
@@ -73,7 +73,7 @@ describe "Merchants API" do
     merchant_params = { name: "Bob Marley" }
     headers = {"CONTENT_TYPE" => "application/json"}
 
-    patch "/api/v1/merchants/#{id}", headers: headers, params: JSON.generate({merchant: merchant_params})
+    patch "/api/v1/merchants/#{id}", headers: headers, params: JSON.generate(merchant_params)
     merchant = Merchant.find_by(id: id)
 
     expect(response).to be_successful
@@ -169,6 +169,157 @@ describe "Merchants API" do
       expect(merchants[0][:attributes][:name]).to eq("Jose Lopez")
 
       expect(merchants[1][:attributes][:name]).to eq("Lorraine Rodriguez")
+    end
+  end
+
+  describe "Business Intelligence Endpoints" do
+    it "should return merchants with most revenue" do
+      merchant1 = create(:merchant)
+      merchant2 = create(:merchant)
+      merchant3 = create(:merchant)
+      customer = create(:customer)
+
+      item1 = create(:item, merchant_id: merchant1.id)
+      item2 = create(:item, merchant_id: merchant1.id)
+      item3 = create(:item, merchant_id: merchant2.id)
+      item4 = create(:item, merchant_id: merchant3.id)
+
+      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant2.id)
+      invoice4 = create(:invoice, customer_id: customer.id, merchant_id: merchant3.id)
+
+      create(:transaction, invoice_id: invoice1.id, result: "success")
+      create(:transaction, invoice_id: invoice2.id, result: "failed")
+      create(:transaction, invoice_id: invoice3.id, result: "success")
+      create(:transaction, invoice_id: invoice4.id, result: "failed")
+
+      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id )
+      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id )
+      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id )
+      create(:invoice_item, item_id: item4.id, invoice_id: invoice4.id )
+
+      get "/api/v1/merchants/most_revenue?quantity=#{2}"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      merchants = json[:data]
+
+      expect(merchants.count).to eq(2)
+
+      expect(merchants[0][:attributes][:name]).to eq(merchant1.name)
+      expect(merchants[1][:attributes][:name]).to eq(merchant2.name)
+    end
+
+    it "should return merchants with most items sold" do
+      merchant1 = create(:merchant)
+      merchant2 = create(:merchant)
+      merchant3 = create(:merchant)
+      customer = create(:customer)
+
+      item1 = create(:item, merchant_id: merchant1.id)
+      item2 = create(:item, merchant_id: merchant1.id)
+      item3 = create(:item, merchant_id: merchant2.id)
+      item4 = create(:item, merchant_id: merchant3.id)
+
+      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant2.id)
+      invoice4 = create(:invoice, customer_id: customer.id, merchant_id: merchant3.id)
+
+      create(:transaction, invoice_id: invoice1.id, result: "success")
+      create(:transaction, invoice_id: invoice2.id, result: "success")
+      create(:transaction, invoice_id: invoice3.id, result: "failed")
+      create(:transaction, invoice_id: invoice4.id, result: "success")
+
+      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id )
+      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id )
+      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id )
+      create(:invoice_item, item_id: item4.id, invoice_id: invoice4.id )
+
+       get "/api/v1/merchants/most_items?quantity=#{2}"
+
+       expect(response).to be_successful
+
+       json = JSON.parse(response.body, symbolize_names: true)
+
+       merchants = json[:data]
+
+       expect(merchants.count).to eq(2)
+
+       expect(merchants[0][:attributes][:name]).to eq(merchant1.name)
+       expect(merchants[1][:attributes][:name]).to eq(merchant3.name)
+    end
+
+    it "should get revenue across date range" do
+      merchant1 = create(:merchant)
+      merchant2 = create(:merchant)
+      merchant3 = create(:merchant)
+      customer = create(:customer)
+
+      item1 = create(:item, merchant_id: merchant1.id, name: 'Bike', unit_price: 100.38)
+      item2 = create(:item, merchant_id: merchant1.id, name: 'RTV', unit_price: 500.39)
+      item3 = create(:item, merchant_id: merchant2.id, name: 'Diamonds', unit_price: 2502.29)
+      item4 = create(:item, merchant_id: merchant3.id, name: 'Pizza', unit_price: 100.36)
+
+      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id, created_at: "2012-03-24", status: 'shipped')
+      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id, created_at: "2012-03-24", status: 'packaged')
+      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant2.id, created_at: "2012-03-24", status: 'shipped')
+      invoice4 = create(:invoice, customer_id: customer.id, merchant_id: merchant3.id, created_at: "2012-03-24", status: 'returned')
+
+      create(:transaction, invoice_id: invoice1.id, result: "success")
+      create(:transaction, invoice_id: invoice2.id, result: "success")
+      create(:transaction, invoice_id: invoice3.id, result: "success")
+      create(:transaction, invoice_id: invoice4.id, result: "failed")
+
+      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id, quantity: 10, unit_price: 100.38)
+      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id, quantity: 5, unit_price: 500.38)
+      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id, quantity: 1, unit_price: 2502.29)
+      create(:invoice_item, item_id: item4.id, invoice_id: invoice4.id, quantity: 5, unit_price: 100.36)
+
+      get "/api/v1/revenue?start=2012-03-09&end=2012-03-24"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      revenue = json[:data]
+
+      expect(revenue[:attributes][:revenue]).to eq(3506.09)
+    end
+
+    it "should return revenue for a merchant" do
+      merchant1 = create(:merchant)
+      customer = create(:customer)
+
+      item1 = create(:item, merchant_id: merchant1.id, name: 'Bike', unit_price: 100.38)
+      item2 = create(:item, merchant_id: merchant1.id, name: 'RTV', unit_price: 500.39)
+      item3 = create(:item, merchant_id: merchant1.id, name: 'Diamonds', unit_price: 2502.29)
+
+      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+
+      create(:transaction, invoice_id: invoice1.id, result: "success")
+      create(:transaction, invoice_id: invoice2.id, result: "failed")
+      create(:transaction, invoice_id: invoice3.id, result: "success")
+
+      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id, quantity: 10, unit_price: 100.38)
+      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id, quantity: 5, unit_price: 500.38)
+      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id, quantity: 1, unit_price: 2502.29)
+
+      get "/api/v1/merchants/#{merchant1.id}/revenue"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      revenue = json[:data]
+
+      expect(revenue[:attributes][:revenue]).to eq(3506.09)
+
     end
   end
 end
