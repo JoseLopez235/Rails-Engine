@@ -75,5 +75,34 @@ RSpec.describe Merchant, type: :model do
 
       expect(Merchant.merchants_revenue(2)).to eq([merchant1, merchant2])
     end
+
+    it ".most_item_sold" do
+      merchant1 = create(:merchant)
+      merchant2 = create(:merchant)
+      merchant3 = create(:merchant)
+      customer = create(:customer)
+
+      item1 = create(:item, merchant_id: merchant1.id)
+      item2 = create(:item, merchant_id: merchant1.id)
+      item3 = create(:item, merchant_id: merchant2.id)
+      item4 = create(:item, merchant_id: merchant3.id)
+
+      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant2.id)
+      invoice4 = create(:invoice, customer_id: customer.id, merchant_id: merchant3.id)
+
+      create(:transaction, invoice_id: invoice1.id, result: "success")
+      create(:transaction, invoice_id: invoice2.id, result: "success")
+      create(:transaction, invoice_id: invoice3.id, result: "failed")
+      create(:transaction, invoice_id: invoice4.id, result: "success")
+
+      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id )
+      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id )
+      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id )
+      create(:invoice_item, item_id: item4.id, invoice_id: invoice4.id )
+
+      expect(Merchant.most_item_sold(2)).to eq([merchant1, merchant3])
+    end
   end
 end
