@@ -17,6 +17,7 @@ Rails.application.routes.draw do
         get '/:item_id/merchants', to: "merchants#index"
       end
 
+      resources :revenue, only: [:index]
       resources :merchants
       resources :items
     end
