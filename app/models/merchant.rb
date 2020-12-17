@@ -35,8 +35,6 @@ class Merchant < ApplicationRecord
   end
 
   def self.revenue_range(start_date, end_date)
-
-
     joins(invoices: [:invoice_items, :transactions])
     .where(
       transactions: {result: 'success'},
