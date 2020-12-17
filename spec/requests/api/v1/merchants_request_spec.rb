@@ -59,7 +59,7 @@ describe "Merchants API" do
                   })
     headers = {"CONTENT_TYPE" => "application/json"}
 
-    post "/api/v1/merchants", headers: headers, params: JSON.generate(merchant: merchant_params)
+    post "/api/v1/merchants", headers: headers, params: JSON.generate(merchant_params)
     created_merchant = Merchant.last
 
     expect(response).to be_successful
@@ -73,7 +73,7 @@ describe "Merchants API" do
     merchant_params = { name: "Bob Marley" }
     headers = {"CONTENT_TYPE" => "application/json"}
 
-    patch "/api/v1/merchants/#{id}", headers: headers, params: JSON.generate({merchant: merchant_params})
+    patch "/api/v1/merchants/#{id}", headers: headers, params: JSON.generate(merchant_params)
     merchant = Merchant.find_by(id: id)
 
     expect(response).to be_successful
@@ -288,6 +288,38 @@ describe "Merchants API" do
       revenue = json[:data]
 
       expect(revenue[:attributes][:revenue]).to eq(3506.09)
+    end
+
+    it "should return revenue for a merchant" do
+      merchant1 = create(:merchant)
+      customer = create(:customer)
+
+      item1 = create(:item, merchant_id: merchant1.id, name: 'Bike', unit_price: 100.38)
+      item2 = create(:item, merchant_id: merchant1.id, name: 'RTV', unit_price: 500.39)
+      item3 = create(:item, merchant_id: merchant1.id, name: 'Diamonds', unit_price: 2502.29)
+
+      invoice1 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice2 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+      invoice3 = create(:invoice, customer_id: customer.id, merchant_id: merchant1.id)
+
+      create(:transaction, invoice_id: invoice1.id, result: "success")
+      create(:transaction, invoice_id: invoice2.id, result: "failed")
+      create(:transaction, invoice_id: invoice3.id, result: "success")
+
+      create(:invoice_item, item_id: item1.id, invoice_id: invoice1.id, quantity: 10, unit_price: 100.38)
+      create(:invoice_item, item_id: item2.id, invoice_id: invoice2.id, quantity: 5, unit_price: 500.38)
+      create(:invoice_item, item_id: item3.id, invoice_id: invoice3.id, quantity: 1, unit_price: 2502.29)
+
+      get "/api/v1/merchants/#{merchant1.id}/revenue"
+
+      expect(response).to be_successful
+
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      revenue = json[:data]
+
+      expect(revenue[:attributes][:revenue]).to eq(3506.09)
+
     end
   end
 end
