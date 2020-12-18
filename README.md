@@ -8,7 +8,7 @@ Rails Engine is an Api created from scratch which is new to me and uses CRUD fun
 Students worked remotely over 10 days using Slack, Zoom, Github, and Github projects. Test-driven development drove the creation of the app with tests written in RSpec. 
 
 ## Instructions
-This project is a local project so in order to use it clone down the repo"
+This project is a local project so in order to use it clone down the repo. Follow this steps:
 ```
 git clone git@github.com:JoseLopez235/Rails-Engine.git
 cd rails-engine
